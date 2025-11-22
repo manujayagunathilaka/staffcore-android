@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<merge xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <ImageView
+        android:id="@+id/glowTop"
+        android:layout_width="500dp"
+        android:layout_height="500dp"
+        android:src="@drawable/bg_glow_circle"
+        android:alpha="0.6"
+        android:translationX="-150dp"
+        android:translationY="-150dp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"/>
+
+    <ImageView
+        android:id="@+id/glowBottom"
+        android:layout_width="450dp"
+        android:layout_height="450dp"
+        android:src="@drawable/bg_glow_circle"
+        android:alpha="0.4"
+        app:tint="@color/neon_blue"
+        android:translationX="150dp"
+        android:translationY="150dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"/>
+</merge>

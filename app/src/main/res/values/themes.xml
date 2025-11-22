@@ -1,9 +1,30 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
     <!-- Base application theme. -->
-    <style name="Base.Theme.StaffCore" parent="Theme.Material3.DayNight.NoActionBar">
-        <!-- Customize your light theme here. -->
-        <!-- <item name="colorPrimary">@color/my_light_primary</item> -->
+<!--    <style name="Base.Theme.StaffCore" parent="Theme.Material3.DayNight.NoActionBar">-->
+<!--        &lt;!&ndash; Customize your light theme here. &ndash;&gt;-->
+<!--        &lt;!&ndash; <item name="colorPrimary">@color/my_light_primary</item> &ndash;&gt;-->
+<!--    </style>-->
+
+    <style name="Base.Theme.ShopManager" parent="Theme.MaterialComponents.DayNight.NoActionBar">
+
+        <item name="colorPrimary">@color/accent_blue</item>
+        <item name="colorPrimaryVariant">@color/bg_dark</item>
+        <item name="colorOnPrimary">@color/text_primary</item>
+
+<!--        <item name="android:statusBarColor">@color/bg_dark</item>-->
+        <item name="android:windowLightStatusBar">false</item>
+
+<!--        <item name="android:windowBackground">@color/bg_dark</item>-->
+
+        <item name="android:textColor">@color/text_primary</item>
+        <item name="android:textColorSecondary">@color/text_secondary</item>
+
+        <item name="android:windowBackground">@drawable/bg_app_main</item>
+
+        <item name="android:statusBarColor">@android:color/transparent</item>
+
     </style>
 
-    <style name="Theme.StaffCore" parent="Base.Theme.StaffCore" />
+    <style name="Theme.ShopManager" parent="Base.Theme.ShopManager" />
+
 </resources>

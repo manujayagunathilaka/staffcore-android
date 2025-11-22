@@ -1,7 +1,36 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <color name="purple_200">#FFBB86FC</color>
     <color name="purple_500">#6200EE</color>
+    <color name="purple_700">#3700B3</color>
     <color name="teal_200">#03DAC5</color>
-    <color name="white">#FFFFFF</color>
+    <color name="teal_700">#018786</color>
     <color name="black">#000000</color>
+    <color name="white">#FFFFFF</color>
+
+    <color name="bg_dark">#151B2B</color>
+    <color name="card_dark">#1F293A</color>
+    <color name="text_primary">#FFFFFF</color>
+    <color name="text_secondary">#8A96A8</color>
+    <color name="accent_blue">#3E7BFA</color>
+    <color name="accent_purple">#6C63FF</color>
+    <color name="glass_stroke">#33FFFFFF</color>
+
+    <color name="status_green">#00C853</color>
+    <color name="status_red">#FF5252</color>
+
+    <color name="bg_deep_purple">#1A103C</color>
+    <color name="bg_dark_overlay">#2D2059</color>
+
+    <color name="neon_pink">#FF2E93</color>
+    <color name="neon_purple">#BF5AF2</color>
+    <color name="neon_blue">#0A84FF</color>
+
+    <color name="status_active_bg">#332ECC71</color>
+    <color name="status_active_text">#2ECC71</color>
+    <color name="status_leave_bg">#33E74C3C</color>
+    <color name="status_leave_text">#E74C3C</color>
+
+    <color name="white_50">#80FFFFFF</color>
+    <color name="white_10">#1AFFFFFF</color>
 </resources>

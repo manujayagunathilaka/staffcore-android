@@ -42,4 +42,42 @@ public class AttendanceDAO {
         return count;
     }
 
+    public Attendance getAttendanceByDate(int empId, String date) {
+        SQLiteDatabase db = dbHelper.getReadableDatabase();
+        Attendance att = null;
+
+        String query = "SELECT * FROM " + DatabaseHelper.TABLE_ATTENDANCE +
+                " WHERE " + DatabaseHelper.COL_ATT_EMP_ID + " = ? AND " + DatabaseHelper.COL_ATT_DATE + " = ?";
+
+        Cursor cursor = db.rawQuery(query, new String[]{String.valueOf(empId), date});
+
+        if (cursor.moveToFirst()) {
+            att = new Attendance();
+            att.setId(cursor.getInt(cursor.getColumnIndexOrThrow(DatabaseHelper.COL_ATT_ID)));
+            att.setEmpId(cursor.getInt(cursor.getColumnIndexOrThrow(DatabaseHelper.COL_ATT_EMP_ID)));
+            att.setDate(cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.COL_ATT_DATE)));
+            att.setInTime(cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.COL_ATT_IN_TIME)));
+            att.setOutTime(cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.COL_ATT_OUT_TIME)));
+            att.setLeave(cursor.getInt(cursor.getColumnIndexOrThrow(DatabaseHelper.COL_ATT_IS_LEAVE)) == 1);
+            att.setLeaveReason(cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.COL_ATT_REASON)));
+        }
+        cursor.close();
+        return att;
+    }
+
+    public boolean updateAttendance(Attendance att) {
+        SQLiteDatabase db = dbHelper.getWritableDatabase();
+        ContentValues cv = new ContentValues();
+
+        cv.put(DatabaseHelper.COL_ATT_IN_TIME, att.getInTime());
+        cv.put(DatabaseHelper.COL_ATT_OUT_TIME, att.getOutTime());
+        cv.put(DatabaseHelper.COL_ATT_IS_LEAVE, att.isLeave() ? 1 : 0);
+        cv.put(DatabaseHelper.COL_ATT_REASON, att.getLeaveReason());
+
+        int rows = db.update(DatabaseHelper.TABLE_ATTENDANCE, cv,
+                DatabaseHelper.COL_ATT_ID + " = ?", new String[]{String.valueOf(att.getId())});
+
+        return rows > 0;
+    }
+
 }

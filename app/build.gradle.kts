@@ -40,4 +40,17 @@ dependencies {
     testImplementation(libs.junit)
     androidTestImplementation(libs.ext.junit)
     androidTestImplementation(libs.espresso.core)
+
+    // Real-time Blur Effect
+    implementation("com.github.Dimezis:BlurView:version-2.0.3")
+    // lottie Animations
+    implementation("com.airbnb.android:lottie:6.1.0")
+    // Circular Image Views
+    implementation("de.hdodenhof:circleimageview:3.1.0")
+    // Glide
+    implementation("com.github.bumptech.glide:glide:4.16.0")
+    // Material Design
+    implementation("com.google.android.material:material:1.11.0")
+
+
 }
