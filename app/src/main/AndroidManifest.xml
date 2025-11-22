@@ -12,6 +12,9 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.ShopManager">
         <activity
+            android:name=".ui.AttendanceHistoryActivity"
+            android:exported="false" />
+        <activity
             android:name=".ui.EmployeeListActivity"
             android:exported="false" />
         <activity

@@ -4,6 +4,10 @@ import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
+
+import java.util.ArrayList;
+import java.util.List;
+
 import lk.businessmanagement.staffcore.model.Attendance;
 
 public class AttendanceDAO {
@@ -78,6 +82,37 @@ public class AttendanceDAO {
                 DatabaseHelper.COL_ATT_ID + " = ?", new String[]{String.valueOf(att.getId())});
 
         return rows > 0;
+    }
+
+    public List<Attendance> getHistoryForMonth(int empId, String monthPrefix) {
+        List<Attendance> list = new ArrayList<>();
+        SQLiteDatabase db = dbHelper.getReadableDatabase();
+
+        String query = "SELECT * FROM " + DatabaseHelper.TABLE_ATTENDANCE +
+                " WHERE " + DatabaseHelper.COL_ATT_EMP_ID + " = ? AND " +
+                DatabaseHelper.COL_ATT_DATE + " LIKE ? " +
+                " ORDER BY " + DatabaseHelper.COL_ATT_DATE + " DESC";
+
+        String[] args = {String.valueOf(empId), monthPrefix + "%"};
+
+        Cursor cursor = db.rawQuery(query, args);
+
+        if (cursor.moveToFirst()) {
+            do {
+                Attendance att = new Attendance();
+                att.setId(cursor.getInt(cursor.getColumnIndexOrThrow(DatabaseHelper.COL_ATT_ID)));
+                att.setEmpId(cursor.getInt(cursor.getColumnIndexOrThrow(DatabaseHelper.COL_ATT_EMP_ID)));
+                att.setDate(cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.COL_ATT_DATE)));
+                att.setInTime(cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.COL_ATT_IN_TIME)));
+                att.setOutTime(cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.COL_ATT_OUT_TIME)));
+                att.setLeave(cursor.getInt(cursor.getColumnIndexOrThrow(DatabaseHelper.COL_ATT_IS_LEAVE)) == 1);
+                att.setLeaveReason(cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.COL_ATT_REASON)));
+
+                list.add(att);
+            } while (cursor.moveToNext());
+        }
+        cursor.close();
+        return list;
     }
 
 }

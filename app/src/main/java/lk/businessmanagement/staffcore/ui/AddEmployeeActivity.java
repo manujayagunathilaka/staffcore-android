@@ -6,7 +6,6 @@ import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.MediaStore;
-import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.RadioButton;
 import android.widget.RadioGroup;
@@ -18,31 +17,41 @@ import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AppCompatActivity;
 
+import com.google.android.material.button.MaterialButton;
 import com.google.android.material.textfield.TextInputEditText;
 
 import java.io.File;
 import java.util.Calendar;
 
+import de.hdodenhof.circleimageview.CircleImageView;
 import lk.businessmanagement.staffcore.R;
-import lk.businessmanagement.staffcore.model.Employee;
 import lk.businessmanagement.staffcore.data.EmployeeDAO;
+import lk.businessmanagement.staffcore.model.Employee;
+import lk.businessmanagement.staffcore.utils.AnimationHelper;
 import lk.businessmanagement.staffcore.utils.ImageUtils;
 import lk.businessmanagement.staffcore.utils.InputValidator;
 
 public class AddEmployeeActivity extends AppCompatActivity {
 
-    private ImageView imgProfile, imgIdFront, imgIdBack, imgCv;
+    // --- UI Components ---
+    private ImageView btnBack;
+    private CircleImageView imgProfile; // Changed to CircleImageView
+    private ImageView imgIdFront, imgIdBack, imgCv;
     private TextInputEditText etName, etNic, etDob, etMobile, etHomePhone, etAddress, etJoinedDate;
     private RadioGroup rgGender, rgMarital;
-    private Button btnSave;
+    private MaterialButton btnSave; // Changed to MaterialButton
 
-    private int selectedImageType = 0;
+    // --- Animation Views ---
+    private ImageView glowTop, glowBottom;
 
+    // --- Data Variables ---
+    private int selectedImageType = 0; // 1=Profile, 2=ID_Front, 3=ID_Back, 4=CV
     private String pathProfile = null;
     private String pathIdFront = null;
     private String pathIdBack = null;
     private String pathCv = null;
 
+    // --- Image Picker Launcher ---
     private final ActivityResultLauncher<Intent> imagePickerLauncher = registerForActivityResult(
             new ActivityResultContracts.StartActivityForResult(),
             new ActivityResultCallback<ActivityResult>() {
@@ -64,15 +73,26 @@ public class AddEmployeeActivity extends AppCompatActivity {
         setContentView(R.layout.activity_add_employee);
 
         initViews();
+
+        // 1. Start Background Animation
+        AnimationHelper.animateBackground(glowTop, glowBottom);
+
         setupClickListeners();
     }
 
     private void initViews() {
+        // Header & Animation
+        btnBack = findViewById(R.id.btnBack);
+        glowTop = findViewById(R.id.glowTop);
+        glowBottom = findViewById(R.id.glowBottom);
+
+        // Images
         imgProfile = findViewById(R.id.imgProfile);
         imgIdFront = findViewById(R.id.imgIdFront);
         imgIdBack = findViewById(R.id.imgIdBack);
         imgCv = findViewById(R.id.imgCv);
 
+        // Text Fields
         etName = findViewById(R.id.etName);
         etNic = findViewById(R.id.etNic);
         etDob = findViewById(R.id.etDob);
@@ -81,21 +101,29 @@ public class AddEmployeeActivity extends AppCompatActivity {
         etAddress = findViewById(R.id.etAddress);
         etJoinedDate = findViewById(R.id.etJoinedDate);
 
+        // Radio Groups
         rgGender = findViewById(R.id.rgGender);
         rgMarital = findViewById(R.id.rgMarital);
 
+        // Button
         btnSave = findViewById(R.id.btnSave);
     }
 
     private void setupClickListeners() {
+        // Back Button Logic
+        btnBack.setOnClickListener(v -> finish());
+
+        // Image Click Listeners
         imgProfile.setOnClickListener(v -> openGallery(1));
         imgIdFront.setOnClickListener(v -> openGallery(2));
         imgIdBack.setOnClickListener(v -> openGallery(3));
         imgCv.setOnClickListener(v -> openGallery(4));
 
+        // Date Pickers
         etDob.setOnClickListener(v -> showDatePicker(etDob));
         etJoinedDate.setOnClickListener(v -> showDatePicker(etJoinedDate));
 
+        // Save Button
         btnSave.setOnClickListener(v -> saveEmployee());
     }
 
@@ -144,7 +172,6 @@ public class AddEmployeeActivity extends AppCompatActivity {
         DatePickerDialog datePickerDialog = new DatePickerDialog(
                 this,
                 (view, year1, month1, dayOfMonth) -> {
-                    // Format: YYYY-MM-DD
                     String date = year1 + "-" + (month1 + 1) + "-" + dayOfMonth;
                     targetEditText.setText(date);
                 },
@@ -153,6 +180,7 @@ public class AddEmployeeActivity extends AppCompatActivity {
     }
 
     private void saveEmployee() {
+        // 1. Get Data
         String name = etName.getText().toString().trim();
         String nic = etNic.getText().toString().trim();
         String mobile = etMobile.getText().toString().trim();
@@ -161,6 +189,7 @@ public class AddEmployeeActivity extends AppCompatActivity {
         String dob = etDob.getText().toString().trim();
         String joined = etJoinedDate.getText().toString().trim();
 
+        // Get Gender
         String gender = "";
         int selectedGenderId = rgGender.getCheckedRadioButtonId();
         if (selectedGenderId != -1) {
@@ -168,6 +197,7 @@ public class AddEmployeeActivity extends AppCompatActivity {
             gender = rb.getText().toString();
         }
 
+        // Get Marital Status
         String marital = "";
         int selectedMaritalId = rgMarital.getCheckedRadioButtonId();
         if (selectedMaritalId != -1) {
@@ -175,6 +205,7 @@ public class AddEmployeeActivity extends AppCompatActivity {
             marital = rb.getText().toString();
         }
 
+        // 2. Validations
         if (!InputValidator.isValidName(name)) {
             etName.setError("Name required");
             return;
@@ -188,18 +219,20 @@ public class AddEmployeeActivity extends AppCompatActivity {
             return;
         }
 
+        // 3. Create Object
         Employee newEmp = new Employee(
                 name, nic, gender, dob, marital,
                 mobile, home, address, joined,
                 pathProfile, pathIdFront, pathIdBack, pathCv
         );
 
+        // 4. Save to DB
         EmployeeDAO dao = new EmployeeDAO(this);
         boolean success = dao.addEmployee(newEmp);
 
         if (success) {
             Toast.makeText(this, "Employee Saved Successfully!", Toast.LENGTH_LONG).show();
-            finish();
+            finish(); // Close and go back
         } else {
             Toast.makeText(this, "Failed to save data", Toast.LENGTH_SHORT).show();
         }
