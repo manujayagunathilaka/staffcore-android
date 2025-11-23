@@ -58,6 +58,13 @@ public class MainActivity extends AppCompatActivity {
             startActivity(intent);
         });
 
+        // Reports Button Click
+        MaterialButton btnDailyReport = findViewById(R.id.btnDailyReport);
+        btnDailyReport.setOnClickListener(v -> {
+            Intent intent = new Intent(MainActivity.this, DailyAttendanceActivity.class);
+            startActivity(intent);
+        });
+
     }
 
     /**

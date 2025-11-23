@@ -190,6 +190,20 @@
                     app:icon="@android:drawable/ic_input_add"
                     app:strokeColor="@color/glass_stroke"
                     app:strokeWidth="1dp" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnDailyReport"
+                    android:layout_width="0dp"
+                    android:layout_height="60dp"
+                    android:layout_weight="1"
+                    android:text="Reports"
+                    android:backgroundTint="@color/bg_dark_overlay"
+                    app:strokeColor="@color/glass_stroke"
+                    app:strokeWidth="1dp"
+                    app:cornerRadius="12dp"
+                    app:icon="@android:drawable/ic_menu_my_calendar"
+                    android:layout_marginStart="8dp"/>
+
             </LinearLayout>
 
             <com.google.android.material.card.MaterialCardView

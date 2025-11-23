@@ -9,6 +9,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import lk.businessmanagement.staffcore.model.Attendance;
+import lk.businessmanagement.staffcore.model.DailyAttendance;
 
 public class AttendanceDAO {
     private DatabaseHelper dbHelper;
@@ -113,6 +114,47 @@ public class AttendanceDAO {
         }
         cursor.close();
         return list;
+    }
+
+    public List<DailyAttendance> getDailyAttendanceReport(String date) {
+        List<DailyAttendance> reportList = new ArrayList<>();
+        SQLiteDatabase db = dbHelper.getReadableDatabase();
+
+        // Employees Table (E), Attendance Table (A)
+        String query = "SELECT E." + DatabaseHelper.COL_ID + ", E." + DatabaseHelper.COL_NAME + ", E." + DatabaseHelper.COL_PROFILE_PATH + ", " +
+                "A." + DatabaseHelper.COL_ATT_IN_TIME + ", A." + DatabaseHelper.COL_ATT_OUT_TIME + ", A." + DatabaseHelper.COL_ATT_IS_LEAVE +
+                " FROM " + DatabaseHelper.TABLE_EMPLOYEES + " E " +
+                " LEFT JOIN " + DatabaseHelper.TABLE_ATTENDANCE + " A " +
+                " ON E." + DatabaseHelper.COL_ID + " = A." + DatabaseHelper.COL_ATT_EMP_ID +
+                " AND A." + DatabaseHelper.COL_ATT_DATE + " = ?";
+
+        Cursor cursor = db.rawQuery(query, new String[]{date});
+
+        if (cursor.moveToFirst()) {
+            do {
+                int empId = cursor.getInt(0); // E.id
+                String name = cursor.getString(1); // E.name
+                String photo = cursor.getString(2); // E.photo_path
+
+                String inTime = cursor.getString(3);
+                String outTime = cursor.getString(4);
+                int isLeaveVal = cursor.isNull(5) ? -1 : cursor.getInt(5);
+
+                int status;
+                if (isLeaveVal == -1) {
+                    status = 3; // Not Marked
+                } else if (isLeaveVal == 1) {
+                    status = 2; // Leave
+                } else {
+                    status = 1; // Present
+                }
+
+                reportList.add(new DailyAttendance(empId, name, photo, status, inTime, outTime));
+
+            } while (cursor.moveToNext());
+        }
+        cursor.close();
+        return reportList;
     }
 
 }

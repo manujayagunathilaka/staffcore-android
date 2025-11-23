@@ -21,50 +21,39 @@ import lk.businessmanagement.staffcore.ui.adapters.AttendanceHistoryAdapter;
 import lk.businessmanagement.staffcore.utils.AnimationHelper;
 
 public class AttendanceHistoryActivity extends AppCompatActivity {
-
-    // UI Components
     private TextView tvCurrentMonth, tvTotalDays, tvPresentDays, tvLeaveDays, tvEmpty;
     private ImageView btnPrevMonth, btnNextMonth, btnBack;
     private RecyclerView recyclerHistory;
     private ImageView glowTop, glowBottom;
-
-    // Data & State
     private AttendanceDAO dao;
     private int empId;
-    private Calendar currentCalendar; // මාසය මතක තියාගන්න
+    private Calendar currentCalendar;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_attendance_history);
 
-        // 1. Initialize
         initViews();
         AnimationHelper.animateBackground(glowTop, glowBottom);
 
         dao = new AttendanceDAO(this);
-        currentCalendar = Calendar.getInstance(); // අද දවස/මාසය ගන්නවා
+        currentCalendar = Calendar.getInstance();
 
-        // Intent එකෙන් ID එක ගන්නවා
         empId = getIntent().getIntExtra("EMP_ID", -1);
 
-        // 2. Setup RecyclerView
         recyclerHistory.setLayoutManager(new LinearLayoutManager(this));
 
-        // 3. Initial Load
         loadHistoryData();
 
-        // 4. Click Listeners
         btnBack.setOnClickListener(v -> finish());
 
         btnPrevMonth.setOnClickListener(v -> {
-            // මාසයක් පස්සට (Minus 1 Month)
             currentCalendar.add(Calendar.MONTH, -1);
             loadHistoryData();
         });
 
         btnNextMonth.setOnClickListener(v -> {
-            // මාසයක් ඉස්සරහට (Plus 1 Month)
             currentCalendar.add(Calendar.MONTH, 1);
             loadHistoryData();
         });
@@ -87,18 +76,14 @@ public class AttendanceHistoryActivity extends AppCompatActivity {
     }
 
     private void loadHistoryData() {
-        // 1. මාසයේ නම UI එකේ පෙන්වීම (Example: November 2025)
         SimpleDateFormat sdfDisplay = new SimpleDateFormat("MMMM yyyy", Locale.getDefault());
         tvCurrentMonth.setText(sdfDisplay.format(currentCalendar.getTime()));
 
-        // 2. Database එකට යවන්න ඕන Format එක හදාගැනීම (Example: "2025-11")
         SimpleDateFormat sdfQuery = new SimpleDateFormat("yyyy-MM", Locale.getDefault());
         String monthPrefix = sdfQuery.format(currentCalendar.getTime());
 
-        // 3. Database එකෙන් Data ගැනීම
         List<Attendance> list = dao.getHistoryForMonth(empId, monthPrefix);
 
-        // 4. Summary ගණනය කිරීම
         int presentCount = 0;
         int leaveCount = 0;
 
@@ -110,12 +95,10 @@ public class AttendanceHistoryActivity extends AppCompatActivity {
             }
         }
 
-        // UI Update (Cards)
         tvTotalDays.setText(String.valueOf(list.size()));
         tvPresentDays.setText(String.valueOf(presentCount));
         tvLeaveDays.setText(String.valueOf(leaveCount));
 
-        // 5. List එක පෙන්වීම
         if (list.isEmpty()) {
             recyclerHistory.setVisibility(View.GONE);
             tvEmpty.setVisibility(View.VISIBLE);
