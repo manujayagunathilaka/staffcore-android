@@ -155,9 +155,8 @@ public class MarkAttendanceActivity extends AppCompatActivity {
             layoutPresent.setVisibility(View.GONE);
             layoutLeave.setVisibility(View.VISIBLE);
 
-            // Visual Update
             tabLeave.setBackgroundResource(R.drawable.bg_tab_active);
-            tabLeave.setTextColor(ContextCompat.getColor(this, R.color.bg_deep_purple));
+            tabLeave.setTextColor(Color.BLACK); // Changed to BLACK
 
             tabPresent.setBackgroundResource(R.drawable.bg_glass_card_border);
             tabPresent.setTextColor(ContextCompat.getColor(this, R.color.white_50));
@@ -166,9 +165,8 @@ public class MarkAttendanceActivity extends AppCompatActivity {
             layoutPresent.setVisibility(View.VISIBLE);
             layoutLeave.setVisibility(View.GONE);
 
-            // Visual Update
             tabPresent.setBackgroundResource(R.drawable.bg_tab_active);
-            tabPresent.setTextColor(ContextCompat.getColor(this, R.color.bg_deep_purple));
+            tabPresent.setTextColor(Color.BLACK); // Changed to BLACK
 
             tabLeave.setBackgroundResource(R.drawable.bg_glass_card_border);
             tabLeave.setTextColor(ContextCompat.getColor(this, R.color.white_50));

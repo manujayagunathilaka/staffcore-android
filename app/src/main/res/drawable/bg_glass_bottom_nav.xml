@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Outer shadow (largest) -->
+    <item
+        android:top="0dp"
+        android:bottom="6dp"
+        android:left="0dp"
+        android:right="0dp">
+        <shape android:shape="rectangle">
+            <solid android:color="#40000000" />
+            <corners android:radius="38dp" />
+        </shape>
+    </item>
+
+    <!-- Middle shadow -->
+    <item
+        android:top="1dp"
+        android:bottom="5dp"
+        android:left="1dp"
+        android:right="1dp">
+        <shape android:shape="rectangle">
+            <solid android:color="#60000000" />
+            <corners android:radius="37dp" />
+        </shape>
+    </item>
+
+    <!-- Inner shadow -->
+    <item
+        android:top="2dp"
+        android:bottom="4dp"
+        android:left="2dp"
+        android:right="2dp">
+        <shape android:shape="rectangle">
+            <solid android:color="#99000000" />
+            <corners android:radius="36dp" />
+        </shape>
+    </item>
+
+    <!-- Main solid background - fully opaque -->
+    <item
+        android:top="3dp"
+        android:bottom="3dp"
+        android:left="3dp"
+        android:right="3dp">
+        <shape android:shape="rectangle">
+            <solid android:color="#FF1F293A" />
+            <corners android:radius="35dp" />
+        </shape>
+    </item>
+
+    <!-- Subtle gradient for depth -->
+    <item
+        android:top="3dp"
+        android:bottom="3dp"
+        android:left="3dp"
+        android:right="3dp">
+        <shape android:shape="rectangle">
+            <gradient
+                android:angle="90"
+                android:startColor="#26677D9B"
+                android:centerColor="#00000000"
+                android:endColor="#1A000000"
+                android:type="linear" />
+            <corners android:radius="35dp" />
+        </shape>
+    </item>
+
+    <!-- Bright border -->
+    <item
+        android:top="3dp"
+        android:bottom="3dp"
+        android:left="3dp"
+        android:right="3dp">
+        <shape android:shape="rectangle">
+            <stroke
+                android:width="2dp"
+                android:color="#99FFFFFF" />
+            <corners android:radius="35dp" />
+        </shape>
+    </item>
+
+    <!-- Inner gold highlight -->
+    <item
+        android:top="5dp"
+        android:bottom="5dp"
+        android:left="5dp"
+        android:right="5dp">
+        <shape android:shape="rectangle">
+            <stroke
+                android:width="1dp"
+                android:color="#80FFD700" />
+            <corners android:radius="33dp" />
+        </shape>
+    </item>
+</layer-list>

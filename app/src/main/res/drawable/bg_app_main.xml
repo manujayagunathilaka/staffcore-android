@@ -5,23 +5,23 @@
         <shape android:shape="rectangle">
             <gradient
                 android:angle="270"
-                android:centerColor="#1A103C"
-                android:endColor="#0F0A25"
-                android:startColor="#2E1F5E" />
+                android:centerColor="#151B2B"
+                android:endColor="#0F0F13"
+                android:startColor="#1A1F2E" />
         </shape>
     </item>
 
     <item
-        android:width="400dp"
-        android:height="400dp"
+        android:width="450dp"
+        android:height="450dp"
         android:left="-100dp"
         android:top="-150dp">
         <shape android:shape="oval">
             <gradient
-                android:centerColor="#206C63FF"
+                android:centerColor="#1AFFD700"
                 android:endColor="#00000000"
-                android:gradientRadius="350dp"
-                android:startColor="#40BF5AF2"
+                android:gradientRadius="400dp"
+                android:startColor="#40FFD700"
                 android:type="radial" />
         </shape>
     </item>

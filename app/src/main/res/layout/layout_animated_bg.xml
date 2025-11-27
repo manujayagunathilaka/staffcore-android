@@ -6,22 +6,24 @@
         android:id="@+id/glowTop"
         android:layout_width="500dp"
         android:layout_height="500dp"
+        android:alpha="0.5"
         android:src="@drawable/bg_glow_circle"
-        android:alpha="0.6"
         android:translationX="-150dp"
         android:translationY="-150dp"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"/>
+        app:layout_constraintTop_toTopOf="parent"
+        app:tint="@color/neon_gold" />
 
     <ImageView
         android:id="@+id/glowBottom"
         android:layout_width="450dp"
         android:layout_height="450dp"
+        android:alpha="0.3"
         android:src="@drawable/bg_glow_circle"
-        android:alpha="0.4"
-        app:tint="@color/neon_blue"
         android:translationX="150dp"
         android:translationY="150dp"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"/>
+        app:layout_constraintEnd_toEndOf="parent"
+        app:tint="@color/neon_gold_dim" />
+
 </merge>
