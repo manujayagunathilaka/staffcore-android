@@ -2,6 +2,7 @@ package lk.businessmanagement.staffcore.ui.adapters;
 
 import android.content.Context;
 import android.content.res.ColorStateList;
+import android.graphics.Color;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -23,10 +24,18 @@ public class DailyReportAdapter extends RecyclerView.Adapter<DailyReportAdapter.
 
     private Context context;
     private List<DailyAttendance> reportList;
+    private OnItemClickListener listener; // Click Listener Variable
 
-    public DailyReportAdapter(Context context, List<DailyAttendance> reportList) {
+    // 1. Interface for Click Event
+    public interface OnItemClickListener {
+        void onItemClick(DailyAttendance item);
+    }
+
+    // 2. Updated Constructor (Accepts Listener)
+    public DailyReportAdapter(Context context, List<DailyAttendance> reportList, OnItemClickListener listener) {
         this.context = context;
         this.reportList = reportList;
+        this.listener = listener;
     }
 
     @NonNull
@@ -51,6 +60,17 @@ public class DailyReportAdapter extends RecyclerView.Adapter<DailyReportAdapter.
             holder.imgProfile.setImageResource(android.R.drawable.sym_def_app_icon);
         }
 
+        // Get the card view container (Make sure XML has ID: cardContainer)
+        // If your XML root layout doesn't have an ID, you might need to add it or use holder.itemView
+        View cardView = holder.itemView.findViewById(R.id.cardContainer);
+        // If cardContainer ID is missing in XML, we use itemView directly for background,
+        // BUT assuming item_daily_status has a nested layout for background.
+        // Let's use the layout inside the FrameLayout which has the background.
+        View backgroundView = (ViewGroup) holder.itemView;
+        if (holder.itemView instanceof ViewGroup && ((ViewGroup) holder.itemView).getChildCount() > 0) {
+            backgroundView = ((ViewGroup) holder.itemView).getChildAt(0);
+        }
+
         // --- STATUS LOGIC ---
         // 1=Present, 2=Leave, 3=Not Marked
 
@@ -63,28 +83,53 @@ public class DailyReportAdapter extends RecyclerView.Adapter<DailyReportAdapter.
                     (item.getOutTime() != null ? item.getOutTime() : "--");
             holder.tvTime.setText(time);
 
+            setCardBorder(backgroundView, R.color.status_green); // Green Border
+
         } else if (item.getStatus() == 2) {
             // Leave (Red)
             holder.tvStatus.setText("Leave");
             setColors(holder.tvStatus, R.color.status_leave_text, R.color.status_leave_bg);
             holder.tvTime.setText("On Leave");
 
+            setCardBorder(backgroundView, R.color.status_red); // Red Border
+
         } else {
             // Not Marked (Grey)
             holder.tvStatus.setText("Pending");
-            // Using generic grey colors (assuming text_secondary is grey)
             setColors(holder.tvStatus, R.color.white_50, R.color.white_10);
             holder.tvTime.setText("Not marked yet");
+
+            setCardBorder(backgroundView, R.color.glass_stroke); // Default Border
         }
+
+        // 3. Click Listener Implementation
+        holder.itemView.setOnClickListener(v -> {
+            if (listener != null) {
+                listener.onItemClick(item);
+            }
+        });
     }
 
-    // Helper to change colors easily
+    // Helper to change text/bg colors
     private void setColors(TextView textView, int textColorRes, int bgTintRes) {
         textView.setTextColor(ContextCompat.getColor(context, textColorRes));
-        // If bgTintRes is a drawable resource ID, usually we use backgroundTintList,
-        // but here we assume color resources for simplicity or drawable tinting.
-        // For strict color tinting:
         textView.setBackgroundTintList(ColorStateList.valueOf(ContextCompat.getColor(context, bgTintRes)));
+    }
+
+    // Helper to change Card Border Color
+    private void setCardBorder(View view, int colorResId) {
+        android.graphics.drawable.GradientDrawable border = new android.graphics.drawable.GradientDrawable();
+        border.setColor(Color.parseColor("#1AFFFFFF")); // Background 10% White
+        border.setCornerRadius(dpToPx(12)); // Radius matching XML
+
+        int strokeColor = ContextCompat.getColor(context, colorResId);
+        border.setStroke(dpToPx(1), strokeColor); // Border Width & Color
+
+        view.setBackground(border);
+    }
+
+    private int dpToPx(int dp) {
+        return (int) (dp * context.getResources().getDisplayMetrics().density);
     }
 
     @Override
