@@ -16,12 +16,18 @@ import androidx.activity.result.ActivityResultCallback;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.graphics.Insets;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowInsetsCompat;
+import androidx.core.view.WindowCompat;
 
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.textfield.TextInputEditText;
 
 import java.io.File;
+import java.text.SimpleDateFormat;
 import java.util.Calendar;
+import java.util.Locale;
 
 import de.hdodenhof.circleimageview.CircleImageView;
 import lk.businessmanagement.staffcore.R;
@@ -35,11 +41,11 @@ public class AddEmployeeActivity extends AppCompatActivity {
 
     // --- UI Components ---
     private ImageView btnBack;
-    private CircleImageView imgProfile; // Changed to CircleImageView
+    private CircleImageView imgProfile;
     private ImageView imgIdFront, imgIdBack, imgCv;
     private TextInputEditText etName, etNic, etDob, etMobile, etHomePhone, etAddress, etJoinedDate;
     private RadioGroup rgGender, rgMarital;
-    private MaterialButton btnSave; // Changed to MaterialButton
+    private MaterialButton btnSave;
 
     // --- Animation Views ---
     private ImageView glowTop, glowBottom;
@@ -54,14 +60,11 @@ public class AddEmployeeActivity extends AppCompatActivity {
     // --- Image Picker Launcher ---
     private final ActivityResultLauncher<Intent> imagePickerLauncher = registerForActivityResult(
             new ActivityResultContracts.StartActivityForResult(),
-            new ActivityResultCallback<ActivityResult>() {
-                @Override
-                public void onActivityResult(ActivityResult result) {
-                    if (result.getResultCode() == Activity.RESULT_OK && result.getData() != null) {
-                        Uri uri = result.getData().getData();
-                        if (uri != null) {
-                            handleImageSelection(uri);
-                        }
+            result -> {
+                if (result.getResultCode() == Activity.RESULT_OK && result.getData() != null) {
+                    Uri uri = result.getData().getData();
+                    if (uri != null) {
+                        handleImageSelection(uri);
                     }
                 }
             }
@@ -70,11 +73,21 @@ public class AddEmployeeActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        // 1. Edge-to-Edge Setup
+        WindowCompat.setDecorFitsSystemWindows(getWindow(), false);
         setContentView(R.layout.activity_add_employee);
+
+        // 2. Fix System Bar Overlaps
+        ViewCompat.setOnApplyWindowInsetsListener(findViewById(android.R.id.content), (v, windowInsets) -> {
+            Insets insets = windowInsets.getInsets(WindowInsetsCompat.Type.systemBars());
+            v.setPadding(insets.left, insets.top, insets.right, insets.bottom);
+            return WindowInsetsCompat.CONSUMED;
+        });
 
         initViews();
 
-        // 1. Start Background Animation
+        // 3. Start Background Animation
         AnimationHelper.animateBackground(glowTop, glowBottom);
 
         setupClickListeners();
@@ -110,21 +123,20 @@ public class AddEmployeeActivity extends AppCompatActivity {
     }
 
     private void setupClickListeners() {
-        // Back Button Logic
         btnBack.setOnClickListener(v -> finish());
 
-        // Image Click Listeners
+        // Image Selection
         imgProfile.setOnClickListener(v -> openGallery(1));
         imgIdFront.setOnClickListener(v -> openGallery(2));
         imgIdBack.setOnClickListener(v -> openGallery(3));
         imgCv.setOnClickListener(v -> openGallery(4));
 
         // Date Pickers
-        etDob.setOnClickListener(v -> showDatePicker(etDob));
-        etJoinedDate.setOnClickListener(v -> showDatePicker(etJoinedDate));
+        etDob.setOnClickListener(v -> showDatePicker(etDob, true)); // DOB requires past date
+        etJoinedDate.setOnClickListener(v -> showDatePicker(etJoinedDate, false)); // Joined date can be recent
 
-        // Save Button
-        btnSave.setOnClickListener(v -> saveEmployee());
+        // Save Action
+        btnSave.setOnClickListener(v -> validateAndSave());
     }
 
     private void openGallery(int type) {
@@ -163,24 +175,33 @@ public class AddEmployeeActivity extends AppCompatActivity {
         }
     }
 
-    private void showDatePicker(TextInputEditText targetEditText) {
+    private void showDatePicker(TextInputEditText targetEditText, boolean limitToPast) {
         final Calendar c = Calendar.getInstance();
         int year = c.get(Calendar.YEAR);
         int month = c.get(Calendar.MONTH);
         int day = c.get(Calendar.DAY_OF_MONTH);
 
+        // If field already has a date, use it
+        // (Optional enhancement logic could go here)
+
         DatePickerDialog datePickerDialog = new DatePickerDialog(
                 this,
                 (view, year1, month1, dayOfMonth) -> {
-                    String date = year1 + "-" + (month1 + 1) + "-" + dayOfMonth;
+                    String date = String.format(Locale.getDefault(), "%d-%02d-%02d", year1, (month1 + 1), dayOfMonth);
                     targetEditText.setText(date);
                 },
                 year, month, day);
+
+        if (limitToPast) {
+            // උපන් දිනය අදට වඩා වැඩි වෙන්න බෑ. (අවුරුදු 18ක් අඩු විය යුතුයි වගේ Logic එකක් ඕන නම් මෙතන දාන්න පුළුවන්)
+            datePickerDialog.getDatePicker().setMaxDate(System.currentTimeMillis());
+        }
+
         datePickerDialog.show();
     }
 
-    private void saveEmployee() {
-        // 1. Get Data
+    private void validateAndSave() {
+        // 1. Extract Data
         String name = etName.getText().toString().trim();
         String nic = etNic.getText().toString().trim();
         String mobile = etMobile.getText().toString().trim();
@@ -189,52 +210,88 @@ public class AddEmployeeActivity extends AppCompatActivity {
         String dob = etDob.getText().toString().trim();
         String joined = etJoinedDate.getText().toString().trim();
 
-        // Get Gender
+        // 2. Validate Fields
+        boolean isValid = true;
+
+        if (!InputValidator.isValidName(name)) {
+            etName.setError("Valid name required (min 3 chars)");
+            isValid = false;
+        }
+
+        if (!InputValidator.isValidNIC(nic)) {
+            etNic.setError("Invalid NIC Format");
+            isValid = false;
+        }
+
+        if (!InputValidator.isValidPhone(mobile)) {
+            etMobile.setError("Invalid Mobile (07xxxxxxxx)");
+            isValid = false;
+        }
+
+        // Home phone is optional, but if entered, must be valid
+        if (!home.isEmpty() && !InputValidator.isValidPhone(home)) {
+            etHomePhone.setError("Invalid Phone");
+            isValid = false;
+        }
+
+        if (dob.isEmpty()) {
+            etDob.setError("Required");
+            isValid = false;
+        }
+
+        if (joined.isEmpty()) {
+            etJoinedDate.setError("Required");
+            isValid = false;
+        }
+
+        if (address.isEmpty()) {
+            etAddress.setError("Address required");
+            isValid = false;
+        }
+
+        // Validate Radio Groups
         String gender = "";
         int selectedGenderId = rgGender.getCheckedRadioButtonId();
-        if (selectedGenderId != -1) {
+        if (selectedGenderId == -1) {
+            Toast.makeText(this, "Please select Gender", Toast.LENGTH_SHORT).show();
+            isValid = false;
+        } else {
             RadioButton rb = findViewById(selectedGenderId);
             gender = rb.getText().toString();
         }
 
-        // Get Marital Status
         String marital = "";
         int selectedMaritalId = rgMarital.getCheckedRadioButtonId();
-        if (selectedMaritalId != -1) {
+        if (selectedMaritalId == -1) {
+            Toast.makeText(this, "Please select Marital Status", Toast.LENGTH_SHORT).show();
+            isValid = false;
+        } else {
             RadioButton rb = findViewById(selectedMaritalId);
             marital = rb.getText().toString();
         }
 
-        // 2. Validations
-        if (!InputValidator.isValidName(name)) {
-            etName.setError("Name required");
-            return;
-        }
-        if (!InputValidator.isValidPhone(mobile)) {
-            etMobile.setError("Invalid Mobile");
-            return;
-        }
-        if (gender.isEmpty()) {
-            Toast.makeText(this, "Select Gender", Toast.LENGTH_SHORT).show();
-            return;
+        // Validate Critical Images (Profile Pic Optional? Let's make it mandatory)
+        if (pathProfile == null) {
+            Toast.makeText(this, "Profile Photo Required", Toast.LENGTH_SHORT).show();
+            isValid = false;
         }
 
-        // 3. Create Object
+        // --- STOP IF INVALID ---
+        if (!isValid) return;
+
+        // 3. Create & Save Object
         Employee newEmp = new Employee(
                 name, nic, gender, dob, marital,
                 mobile, home, address, joined,
                 pathProfile, pathIdFront, pathIdBack, pathCv
         );
 
-        // 4. Save to DB
         EmployeeDAO dao = new EmployeeDAO(this);
-        boolean success = dao.addEmployee(newEmp);
-
-        if (success) {
-            Toast.makeText(this, "Employee Saved Successfully!", Toast.LENGTH_LONG).show();
-            finish(); // Close and go back
+        if (dao.addEmployee(newEmp)) {
+            Toast.makeText(this, "Employee Added Successfully!", Toast.LENGTH_LONG).show();
+            finish(); // Close activity
         } else {
-            Toast.makeText(this, "Failed to save data", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, "Database Error: Could not save.", Toast.LENGTH_SHORT).show();
         }
     }
 }
