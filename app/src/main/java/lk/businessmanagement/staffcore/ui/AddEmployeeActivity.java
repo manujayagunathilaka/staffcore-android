@@ -6,7 +6,9 @@ import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.MediaStore;
+import android.view.View;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.RadioButton;
 import android.widget.RadioGroup;
 import android.widget.Toast;
@@ -16,16 +18,15 @@ import androidx.activity.result.ActivityResultCallback;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.graphics.Insets;
-import androidx.core.view.ViewCompat;
-import androidx.core.view.WindowInsetsCompat;
-import androidx.core.view.WindowCompat;
+import androidx.core.content.ContextCompat;
 
+import com.bumptech.glide.Glide;
+import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.textfield.TextInputEditText;
+import com.yalantis.ucrop.UCrop;
 
 import java.io.File;
-import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Locale;
 
@@ -43,6 +44,10 @@ public class AddEmployeeActivity extends AppCompatActivity {
     private ImageView btnBack;
     private CircleImageView imgProfile;
     private ImageView imgIdFront, imgIdBack, imgCv;
+    private View btnSelectIdFront, btnSelectIdBack, btnSelectCv;
+    // Containers
+//    private LinearLayout btnSelectIdFront, btnSelectIdBack, btnSelectCv;
+
     private TextInputEditText etName, etNic, etDob, etMobile, etHomePhone, etAddress, etJoinedDate;
     private RadioGroup rgGender, rgMarital;
     private MaterialButton btnSave;
@@ -57,15 +62,30 @@ public class AddEmployeeActivity extends AppCompatActivity {
     private String pathIdBack = null;
     private String pathCv = null;
 
-    // --- Image Picker Launcher ---
-    private final ActivityResultLauncher<Intent> imagePickerLauncher = registerForActivityResult(
+    // 1. Gallery Launcher (Photo එක තෝරාගැනීමට)
+    private final ActivityResultLauncher<Intent> galleryLauncher = registerForActivityResult(
             new ActivityResultContracts.StartActivityForResult(),
             result -> {
                 if (result.getResultCode() == Activity.RESULT_OK && result.getData() != null) {
-                    Uri uri = result.getData().getData();
-                    if (uri != null) {
-                        handleImageSelection(uri);
+                    Uri sourceUri = result.getData().getData();
+                    if (sourceUri != null) {
+                        startCrop(sourceUri); // තෝරාගත් පසු Crop කිරීමට යවයි
                     }
+                }
+            }
+    );
+
+    // 2. Crop Launcher (Crop කළ Photo එක ලබාගැනීමට)
+    private final ActivityResultLauncher<Intent> cropLauncher = registerForActivityResult(
+            new ActivityResultContracts.StartActivityForResult(),
+            result -> {
+                if (result.getResultCode() == RESULT_OK && result.getData() != null) {
+                    final Uri resultUri = UCrop.getOutput(result.getData());
+                    if (resultUri != null) {
+                        handleCropResult(resultUri); // Crop වූ Photo එක Save කරයි
+                    }
+                } else if (result.getResultCode() == UCrop.RESULT_ERROR) {
+                    Toast.makeText(this, "Crop Error!", Toast.LENGTH_SHORT).show();
                 }
             }
     );
@@ -73,39 +93,27 @@ public class AddEmployeeActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
-        // 1. Edge-to-Edge Setup
-        WindowCompat.setDecorFitsSystemWindows(getWindow(), false);
         setContentView(R.layout.activity_add_employee);
 
-        // 2. Fix System Bar Overlaps
-        ViewCompat.setOnApplyWindowInsetsListener(findViewById(android.R.id.content), (v, windowInsets) -> {
-            Insets insets = windowInsets.getInsets(WindowInsetsCompat.Type.systemBars());
-            v.setPadding(insets.left, insets.top, insets.right, insets.bottom);
-            return WindowInsetsCompat.CONSUMED;
-        });
-
         initViews();
-
-        // 3. Start Background Animation
         AnimationHelper.animateBackground(glowTop, glowBottom);
-
         setupClickListeners();
     }
 
     private void initViews() {
-        // Header & Animation
         btnBack = findViewById(R.id.btnBack);
         glowTop = findViewById(R.id.glowTop);
         glowBottom = findViewById(R.id.glowBottom);
 
-        // Images
         imgProfile = findViewById(R.id.imgProfile);
         imgIdFront = findViewById(R.id.imgIdFront);
         imgIdBack = findViewById(R.id.imgIdBack);
         imgCv = findViewById(R.id.imgCv);
 
-        // Text Fields
+        btnSelectIdFront = findViewById(R.id.btnSelectIdFront);
+        btnSelectIdBack = findViewById(R.id.btnSelectIdBack);
+        btnSelectCv = findViewById(R.id.btnSelectCv);
+
         etName = findViewById(R.id.etName);
         etNic = findViewById(R.id.etNic);
         etDob = findViewById(R.id.etDob);
@@ -114,94 +122,122 @@ public class AddEmployeeActivity extends AppCompatActivity {
         etAddress = findViewById(R.id.etAddress);
         etJoinedDate = findViewById(R.id.etJoinedDate);
 
-        // Radio Groups
         rgGender = findViewById(R.id.rgGender);
         rgMarital = findViewById(R.id.rgMarital);
 
-        // Button
         btnSave = findViewById(R.id.btnSave);
     }
 
     private void setupClickListeners() {
         btnBack.setOnClickListener(v -> finish());
 
-        // Image Selection
         imgProfile.setOnClickListener(v -> openGallery(1));
-        imgIdFront.setOnClickListener(v -> openGallery(2));
-        imgIdBack.setOnClickListener(v -> openGallery(3));
-        imgCv.setOnClickListener(v -> openGallery(4));
+        btnSelectIdFront.setOnClickListener(v -> openGallery(2));
+        btnSelectIdBack.setOnClickListener(v -> openGallery(3));
+        btnSelectCv.setOnClickListener(v -> openGallery(4));
 
-        // Date Pickers
-        etDob.setOnClickListener(v -> showDatePicker(etDob, true)); // DOB requires past date
-        etJoinedDate.setOnClickListener(v -> showDatePicker(etJoinedDate, false)); // Joined date can be recent
+        etDob.setOnClickListener(v -> showDatePicker(etDob));
+        etJoinedDate.setOnClickListener(v -> showDatePicker(etJoinedDate));
 
-        // Save Action
-        btnSave.setOnClickListener(v -> validateAndSave());
+        btnSave.setOnClickListener(v -> saveEmployee());
     }
 
     private void openGallery(int type) {
         selectedImageType = type;
         Intent intent = new Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
-        imagePickerLauncher.launch(intent);
+        galleryLauncher.launch(intent);
     }
 
-    private void handleImageSelection(Uri sourceUri) {
-        String localPath = ImageUtils.copyImageToAppStorage(this, sourceUri);
+    // --- CROP FUNCTION ---
+    private void startCrop(Uri sourceUri) {
+        // තාවකාලික ගොනුවක් සාදා ගනී (Destination Uri)
+        String fileName = "crop_" + System.currentTimeMillis() + ".jpg";
+        Uri destinationUri = Uri.fromFile(new File(getCacheDir(), fileName));
+
+        UCrop.Options options = new UCrop.Options();
+
+        // Crop UI Colors (අපේ Gold Theme එකට ගැලපෙන්න)
+        options.setToolbarColor(ContextCompat.getColor(this, R.color.bg_dark));
+        options.setStatusBarColor(ContextCompat.getColor(this, R.color.bg_dark));
+        options.setToolbarWidgetColor(ContextCompat.getColor(this, R.color.neon_gold));
+        options.setActiveControlsWidgetColor(ContextCompat.getColor(this, R.color.neon_gold));
+
+        // Profile එකට විතරක් Square Crop (1:1), අනිත් ඒවට Free Crop
+        if (selectedImageType == 1) {
+            options.withAspectRatio(1, 1);
+        } else {
+            options.useSourceImageAspectRatio();
+        }
+
+        // Start uCrop Activity
+        Intent intent = UCrop.of(sourceUri, destinationUri)
+                .withOptions(options)
+                .getIntent(this);
+
+        cropLauncher.launch(intent);
+    }
+
+    // --- SAVE & DISPLAY ---
+    private void handleCropResult(Uri croppedUri) {
+        // Crop කළ Image එක අපේ App Storage එකට Copy කිරීම
+        String localPath = ImageUtils.copyImageToAppStorage(this, croppedUri);
 
         if (localPath != null) {
             File imgFile = new File(localPath);
-            Uri displayUri = Uri.fromFile(imgFile);
 
             switch (selectedImageType) {
                 case 1:
                     pathProfile = localPath;
-                    imgProfile.setImageURI(displayUri);
+                    // Profile එක CircleImageView නිසා Scale Type වෙනස් කරන්න ඕන නෑ
+                    Glide.with(this).load(imgFile)
+                            .diskCacheStrategy(DiskCacheStrategy.NONE)
+                            .skipMemoryCache(true)
+                            .into(imgProfile);
                     break;
                 case 2:
                     pathIdFront = localPath;
-                    imgIdFront.setImageURI(displayUri);
+                    loadImageToView(imgIdFront, imgFile); // Helper Method එක යොදාගැනීම
                     break;
                 case 3:
                     pathIdBack = localPath;
-                    imgIdBack.setImageURI(displayUri);
+                    loadImageToView(imgIdBack, imgFile);
                     break;
                 case 4:
                     pathCv = localPath;
-                    imgCv.setImageURI(displayUri);
+                    loadImageToView(imgCv, imgFile);
                     break;
             }
         } else {
-            Toast.makeText(this, "Failed to save image", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, "Save Failed!", Toast.LENGTH_SHORT).show();
         }
     }
 
-    private void showDatePicker(TextInputEditText targetEditText, boolean limitToPast) {
+    // --- HELPER METHOD TO FIX IMAGE DISPLAY ---
+    private void loadImageToView(ImageView view, File imageFile) {
+        // 1. Tint එක අයින් කරන්න (නැත්නම් පින්තූරේ අළු පාට වෙලා පේන්නේ)
+        view.setColorFilter(null);
+        view.setImageTintList(null);
+
+        // 2. Image එක කොටුව පිරෙන්න ලොකු කරන්න
+        view.setScaleType(ImageView.ScaleType.CENTER_CROP);
+
+        // 3. Glide වලින් Load කරන්න
+        Glide.with(this)
+                .load(imageFile)
+                .diskCacheStrategy(DiskCacheStrategy.NONE)
+                .skipMemoryCache(true)
+                .into(view);
+    }
+
+    private void showDatePicker(TextInputEditText targetEditText) {
         final Calendar c = Calendar.getInstance();
-        int year = c.get(Calendar.YEAR);
-        int month = c.get(Calendar.MONTH);
-        int day = c.get(Calendar.DAY_OF_MONTH);
-
-        // If field already has a date, use it
-        // (Optional enhancement logic could go here)
-
-        DatePickerDialog datePickerDialog = new DatePickerDialog(
-                this,
-                (view, year1, month1, dayOfMonth) -> {
-                    String date = String.format(Locale.getDefault(), "%d-%02d-%02d", year1, (month1 + 1), dayOfMonth);
-                    targetEditText.setText(date);
-                },
-                year, month, day);
-
-        if (limitToPast) {
-            // උපන් දිනය අදට වඩා වැඩි වෙන්න බෑ. (අවුරුදු 18ක් අඩු විය යුතුයි වගේ Logic එකක් ඕන නම් මෙතන දාන්න පුළුවන්)
-            datePickerDialog.getDatePicker().setMaxDate(System.currentTimeMillis());
-        }
-
-        datePickerDialog.show();
+        new DatePickerDialog(this, (view, year, month, day) -> {
+            String date = String.format(Locale.getDefault(), "%d-%02d-%02d", year, (month + 1), day);
+            targetEditText.setText(date);
+        }, c.get(Calendar.YEAR), c.get(Calendar.MONTH), c.get(Calendar.DAY_OF_MONTH)).show();
     }
 
-    private void validateAndSave() {
-        // 1. Extract Data
+    private void saveEmployee() {
         String name = etName.getText().toString().trim();
         String nic = etNic.getText().toString().trim();
         String mobile = etMobile.getText().toString().trim();
@@ -210,76 +246,33 @@ public class AddEmployeeActivity extends AppCompatActivity {
         String dob = etDob.getText().toString().trim();
         String joined = etJoinedDate.getText().toString().trim();
 
-        // 2. Validate Fields
-        boolean isValid = true;
-
-        if (!InputValidator.isValidName(name)) {
-            etName.setError("Valid name required (min 3 chars)");
-            isValid = false;
-        }
-
-        if (!InputValidator.isValidNIC(nic)) {
-            etNic.setError("Invalid NIC Format");
-            isValid = false;
-        }
-
-        if (!InputValidator.isValidPhone(mobile)) {
-            etMobile.setError("Invalid Mobile (07xxxxxxxx)");
-            isValid = false;
-        }
-
-        // Home phone is optional, but if entered, must be valid
-        if (!home.isEmpty() && !InputValidator.isValidPhone(home)) {
-            etHomePhone.setError("Invalid Phone");
-            isValid = false;
-        }
-
-        if (dob.isEmpty()) {
-            etDob.setError("Required");
-            isValid = false;
-        }
-
-        if (joined.isEmpty()) {
-            etJoinedDate.setError("Required");
-            isValid = false;
-        }
-
-        if (address.isEmpty()) {
-            etAddress.setError("Address required");
-            isValid = false;
-        }
-
-        // Validate Radio Groups
         String gender = "";
         int selectedGenderId = rgGender.getCheckedRadioButtonId();
-        if (selectedGenderId == -1) {
-            Toast.makeText(this, "Please select Gender", Toast.LENGTH_SHORT).show();
-            isValid = false;
-        } else {
+        if (selectedGenderId != -1) {
             RadioButton rb = findViewById(selectedGenderId);
             gender = rb.getText().toString();
         }
 
         String marital = "";
         int selectedMaritalId = rgMarital.getCheckedRadioButtonId();
-        if (selectedMaritalId == -1) {
-            Toast.makeText(this, "Please select Marital Status", Toast.LENGTH_SHORT).show();
-            isValid = false;
-        } else {
+        if (selectedMaritalId != -1) {
             RadioButton rb = findViewById(selectedMaritalId);
             marital = rb.getText().toString();
         }
 
-        // Validate Critical Images (Profile Pic Optional? Let's make it mandatory)
-        if (pathProfile == null) {
-            Toast.makeText(this, "Profile Photo Required", Toast.LENGTH_SHORT).show();
-            isValid = false;
+        if (!InputValidator.isValidName(name)) {
+            etName.setError("Name required");
+            return;
+        }
+        if (!InputValidator.isValidPhone(mobile)) {
+            etMobile.setError("Invalid Mobile");
+            return;
+        }
+        if (gender.isEmpty()) {
+            Toast.makeText(this, "Select Gender", Toast.LENGTH_SHORT).show();
+            return;
         }
 
-        // --- STOP IF INVALID ---
-        if (!isValid) return;
-
-        // 3. Create & Save Object
         Employee newEmp = new Employee(
                 name, nic, gender, dob, marital,
                 mobile, home, address, joined,
@@ -288,10 +281,10 @@ public class AddEmployeeActivity extends AppCompatActivity {
 
         EmployeeDAO dao = new EmployeeDAO(this);
         if (dao.addEmployee(newEmp)) {
-            Toast.makeText(this, "Employee Added Successfully!", Toast.LENGTH_LONG).show();
-            finish(); // Close activity
+            Toast.makeText(this, "Employee Saved!", Toast.LENGTH_LONG).show();
+            finish();
         } else {
-            Toast.makeText(this, "Database Error: Could not save.", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, "Failed to save data", Toast.LENGTH_SHORT).show();
         }
     }
 }

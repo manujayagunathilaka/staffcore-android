@@ -51,6 +51,7 @@ dependencies {
     implementation("com.github.bumptech.glide:glide:4.16.0")
     // Material Design
     implementation("com.google.android.material:material:1.11.0")
+    implementation("com.github.yalantis:ucrop:2.2.8")
 
 
 }
