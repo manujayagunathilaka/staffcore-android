@@ -11,6 +11,7 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.RadioButton;
 import android.widget.RadioGroup;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.activity.result.ActivityResult;
@@ -237,7 +238,43 @@ public class AddEmployeeActivity extends AppCompatActivity {
         }, c.get(Calendar.YEAR), c.get(Calendar.MONTH), c.get(Calendar.DAY_OF_MONTH)).show();
     }
 
+    private void showStatusDialog(boolean isSuccess, String title, String message) {
+        android.app.AlertDialog.Builder builder = new android.app.AlertDialog.Builder(this);
+        View view = getLayoutInflater().inflate(R.layout.layout_dialog_glass, null);
+        builder.setView(view);
+        android.app.AlertDialog dialog = builder.create();
+        dialog.getWindow().setBackgroundDrawableResource(android.R.color.transparent);
+
+        ImageView icon = view.findViewById(R.id.dialogIcon);
+        TextView tvTitle = view.findViewById(R.id.dialogTitle);
+        TextView tvMessage = view.findViewById(R.id.dialogMessage);
+        MaterialButton btnOk = view.findViewById(R.id.dialogButton);
+
+        tvTitle.setText(title);
+        tvMessage.setText(message);
+
+        if (isSuccess) {
+            icon.setImageResource(android.R.drawable.checkbox_on_background);
+            icon.setColorFilter(getColor(R.color.status_green));
+            btnOk.setBackgroundColor(getColor(R.color.status_green));
+            btnOk.setText("Great!");
+            btnOk.setOnClickListener(v -> {
+                dialog.dismiss();
+                finish(); // Close activity only on success
+            });
+        } else {
+            icon.setImageResource(android.R.drawable.ic_delete);
+            icon.setColorFilter(getColor(R.color.status_red));
+            btnOk.setBackgroundColor(getColor(R.color.status_red));
+            btnOk.setText("Try Again");
+            btnOk.setOnClickListener(v -> dialog.dismiss());
+        }
+
+        dialog.show();
+    }
+
     private void saveEmployee() {
+        // 1. Get Data
         String name = etName.getText().toString().trim();
         String nic = etNic.getText().toString().trim();
         String mobile = etMobile.getText().toString().trim();
@@ -246,6 +283,7 @@ public class AddEmployeeActivity extends AppCompatActivity {
         String dob = etDob.getText().toString().trim();
         String joined = etJoinedDate.getText().toString().trim();
 
+        // Radio Groups
         String gender = "";
         int selectedGenderId = rgGender.getCheckedRadioButtonId();
         if (selectedGenderId != -1) {
@@ -260,19 +298,71 @@ public class AddEmployeeActivity extends AppCompatActivity {
             marital = rb.getText().toString();
         }
 
+        // --- VALIDATION (TOP TO BOTTOM) ---
+
+        // 1. Photo Validation
+//        if (pathProfile == null) {
+//            showStatusDialog(false, "Photo Required", "Please upload a profile photo.");
+//            return;
+//        }
+
+        // 2. Name
         if (!InputValidator.isValidName(name)) {
-            etName.setError("Name required");
-            return;
-        }
-        if (!InputValidator.isValidPhone(mobile)) {
-            etMobile.setError("Invalid Mobile");
-            return;
-        }
-        if (gender.isEmpty()) {
-            Toast.makeText(this, "Select Gender", Toast.LENGTH_SHORT).show();
+            etName.setError("Valid name required (min 3 chars)");
+            etName.requestFocus();
             return;
         }
 
+        // 3. NIC
+        if (!InputValidator.isValidNIC(nic)) {
+            etNic.setError("Invalid NIC number");
+            etNic.requestFocus();
+            return;
+        }
+
+        // 4. Gender
+        if (gender.isEmpty()) {
+            showStatusDialog(false, "Gender Missing", "Please select gender.");
+            rgGender.requestFocus();
+            return;
+        }
+
+        // 5. DOB
+        if (dob.isEmpty()) {
+            etDob.setError("Date of Birth required");
+            showStatusDialog(false, "Date Missing", "Please select Date of Birth.");
+            return;
+        }
+
+        // 6. Marital Status
+        if (marital.isEmpty()) {
+            showStatusDialog(false, "Status Missing", "Please select Marital Status.");
+            rgMarital.requestFocus();
+            return;
+        }
+
+        // 7. Mobile (Length check is handled by XML, but good to check format)
+        if (!InputValidator.isValidPhone(mobile)) {
+            etMobile.setError("Invalid Mobile Number (07...)");
+            etMobile.requestFocus();
+            return;
+        }
+
+        // 8. Address
+        if (address.isEmpty()) {
+            etAddress.setError("Address required");
+            etAddress.requestFocus();
+            return;
+        }
+
+        // 9. Joined Date
+        if (joined.isEmpty()) {
+            etJoinedDate.setError("Joined Date required");
+            showStatusDialog(false, "Date Missing", "Please select Joined Date.");
+            return;
+        }
+
+        // If All Good -> Save
         Employee newEmp = new Employee(
                 name, nic, gender, dob, marital,
                 mobile, home, address, joined,
@@ -281,10 +371,9 @@ public class AddEmployeeActivity extends AppCompatActivity {
 
         EmployeeDAO dao = new EmployeeDAO(this);
         if (dao.addEmployee(newEmp)) {
-            Toast.makeText(this, "Employee Saved!", Toast.LENGTH_LONG).show();
-            finish();
+            showStatusDialog(true, "Success!", "Employee profile created successfully.");
         } else {
-            Toast.makeText(this, "Failed to save data", Toast.LENGTH_SHORT).show();
+            showStatusDialog(false, "Database Error", "Failed to save data. Please try again.");
         }
     }
 }

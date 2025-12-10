@@ -120,9 +120,10 @@ public class AttendanceDAO {
         List<DailyAttendance> reportList = new ArrayList<>();
         SQLiteDatabase db = dbHelper.getReadableDatabase();
 
-        // Employees Table (E), Attendance Table (A)
-        String query = "SELECT E." + DatabaseHelper.COL_ID + ", E." + DatabaseHelper.COL_NAME + ", E." + DatabaseHelper.COL_PROFILE_PATH + ", " +
-                "A." + DatabaseHelper.COL_ATT_IN_TIME + ", A." + DatabaseHelper.COL_ATT_OUT_TIME + ", A." + DatabaseHelper.COL_ATT_IS_LEAVE +
+        String query = "SELECT E." + DatabaseHelper.COL_ID + ", E." + DatabaseHelper.COL_NAME +
+                ", E." + DatabaseHelper.COL_PROFILE_PATH + ", E." + DatabaseHelper.COL_JOINED_DATE +
+                ", A." + DatabaseHelper.COL_ATT_IN_TIME + ", A." + DatabaseHelper.COL_ATT_OUT_TIME +
+                ", A." + DatabaseHelper.COL_ATT_IS_LEAVE +
                 " FROM " + DatabaseHelper.TABLE_EMPLOYEES + " E " +
                 " LEFT JOIN " + DatabaseHelper.TABLE_ATTENDANCE + " A " +
                 " ON E." + DatabaseHelper.COL_ID + " = A." + DatabaseHelper.COL_ATT_EMP_ID +
@@ -132,29 +133,33 @@ public class AttendanceDAO {
 
         if (cursor.moveToFirst()) {
             do {
-                int empId = cursor.getInt(0); // E.id
-                String name = cursor.getString(1); // E.name
-                String photo = cursor.getString(2); // E.photo_path
+                DailyAttendance item = new DailyAttendance();
 
-                String inTime = cursor.getString(3);
-                String outTime = cursor.getString(4);
-                int isLeaveVal = cursor.isNull(5) ? -1 : cursor.getInt(5);
+                item.setEmpId(cursor.getInt(0));
+                item.setEmployeeName(cursor.getString(1));
+                item.setPhotoPath(cursor.getString(2));
 
-                int status;
-                if (isLeaveVal == -1) {
-                    status = 3; // Not Marked
-                } else if (isLeaveVal == 1) {
-                    status = 2; // Leave
+                item.setJoinedDate(cursor.getString(3));
+
+                String inTime = cursor.getString(4);
+                String outTime = cursor.getString(5);
+                int isLeaveVal = cursor.isNull(6) ? -1 : cursor.getInt(6);
+
+                item.setInTime(inTime);
+                item.setOutTime(outTime);
+
+                // Leave Status Logic
+                if (isLeaveVal == 1) {
+                    item.setLeave(true);
                 } else {
-                    status = 1; // Present
+                    item.setLeave(false);
                 }
 
-                reportList.add(new DailyAttendance(empId, name, photo, status, inTime, outTime));
+                reportList.add(item);
 
             } while (cursor.moveToNext());
         }
         cursor.close();
         return reportList;
     }
-
 }

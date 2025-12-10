@@ -41,7 +41,8 @@ public class DailyAttendanceActivity extends AppCompatActivity {
 
     // --- UI Components ---
     private TextView tvMonth, tvYear; // New split headers
-    private TextView tvTotal, tvPresent, tvAbsent;
+    // අලුත්: tvPending එකතු කරන ලදී
+    private TextView tvTotal, tvPresent, tvAbsent, tvPending;
     private RecyclerView recyclerCalendar, recyclerDaily;
     private ImageView btnBack, btnPrevMonth, btnNextMonth, glowTop, glowBottom;
 
@@ -95,10 +96,11 @@ public class DailyAttendanceActivity extends AppCompatActivity {
         tvMonth = findViewById(R.id.tvMonth);
         tvYear = findViewById(R.id.tvYear);
 
-        // Summary Cards
+        // Summary Cards (tvPending එකතු කරන ලදී)
         tvTotal = findViewById(R.id.tvTotal);
         tvPresent = findViewById(R.id.tvPresent);
         tvAbsent = findViewById(R.id.tvAbsent);
+        tvPending = findViewById(R.id.tvPending); // R.id.tvPending
 
         // Recyclers
         recyclerCalendar = findViewById(R.id.recyclerCalendar);
@@ -238,31 +240,68 @@ public class DailyAttendanceActivity extends AppCompatActivity {
 
     /**
      * Loads employee list and attendance status for the selected date
+     * (UPDATED with Joined Date Filter and Pending Count)
      */
     private void loadAttendanceData(Date date) {
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault());
-        String dateStr = sdf.format(date);
+        String selectedDateStr = sdf.format(date);
 
-        List<DailyAttendance> list = dao.getDailyAttendanceReport(dateStr);
+        List<DailyAttendance> fullList = dao.getDailyAttendanceReport(selectedDateStr);
 
-        // Update Summary Counts
+        List<DailyAttendance> filteredList = new ArrayList<>();
+
         int present = 0;
         int absent = 0;
-        for (DailyAttendance item : list) {
-            if (item.getStatus() == 1) present++;
-            else absent++;
+        int pending = 0; // NEW: Pending Count
+
+        for (DailyAttendance item : fullList) {
+            // --- LOGIC: Joined Date Check ---
+            // If the selected date is ON or AFTER the joined date, process the item
+            if (isDateAfterOrEqual(selectedDateStr, item.getJoinedDate())) {
+
+                filteredList.add(item); // Valid Employee
+
+                // Status Check (1=Present, 2=Leave, 3=Pending)
+                if (item.getStatus() == 1) {
+                    present++;
+                } else if (item.getStatus() == 2) {
+                    absent++;
+                } else if (item.getStatus() == 3) {
+                    pending++; // Count Pending
+                }
+            }
         }
 
-        tvTotal.setText(String.valueOf(list.size()));
+        // Summary Update (NEW: tvPending is set)
+        tvTotal.setText(String.valueOf(filteredList.size()));
         tvPresent.setText(String.valueOf(present));
         tvAbsent.setText(String.valueOf(absent));
+        tvPending.setText(String.valueOf(pending)); // Set Pending Count
 
-        // Update List Adapter with Click Listener for Bottom Sheet
-        DailyReportAdapter adapter = new DailyReportAdapter(this, list, item -> {
-            // Show the action bottom sheet
-            showMarkBottomSheet(item, dateStr);
+        DailyReportAdapter adapter = new DailyReportAdapter(this, filteredList, item -> {
+            showMarkBottomSheet(item, selectedDateStr);
         });
         recyclerDaily.setAdapter(adapter);
+    }
+
+    /**
+     * Helper to compare if selectedDate is on or after joinedDate
+     */
+    private boolean isDateAfterOrEqual(String selectedDate, String joinedDate) {
+        if (joinedDate == null || joinedDate.isEmpty()) return true;
+
+        try {
+            SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault());
+            Date d1 = sdf.parse(selectedDate);
+            Date d2 = sdf.parse(joinedDate);
+
+            // True if d1 is NOT before d2 (i.e., d1 >= d2)
+            return !d1.before(d2);
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            return true;
+        }
     }
 
     /**
