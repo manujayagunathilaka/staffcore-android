@@ -54,10 +54,10 @@ public class DailyReportAdapter extends RecyclerView.Adapter<DailyReportAdapter.
         // Load Image
         if (item.getPhotoPath() != null && !item.getPhotoPath().isEmpty()) {
             Glide.with(context).load(item.getPhotoPath())
-                    .placeholder(android.R.drawable.sym_def_app_icon)
+                    .placeholder(R.drawable.ic_default_avatar)
                     .into(holder.imgProfile);
         } else {
-            holder.imgProfile.setImageResource(android.R.drawable.sym_def_app_icon);
+            holder.imgProfile.setImageResource(R.drawable.ic_default_avatar);
         }
 
         // Get the card view container (Make sure XML has ID: cardContainer)

@@ -59,10 +59,10 @@ public class EmployeeAdapter extends RecyclerView.Adapter<EmployeeAdapter.Employ
         if (emp.getProfilePhotoPath() != null && !emp.getProfilePhotoPath().isEmpty()) {
             Glide.with(context)
                     .load(emp.getProfilePhotoPath())
-                    .placeholder(android.R.drawable.sym_def_app_icon)
+                    .placeholder(R.drawable.ic_default_avatar)
                     .into(holder.imgProfile);
         } else {
-            holder.imgProfile.setImageResource(android.R.drawable.sym_def_app_icon);
+            holder.imgProfile.setImageResource(R.drawable.ic_default_avatar);
         }
 
         // Click Logic based on 'isAttendanceMode'

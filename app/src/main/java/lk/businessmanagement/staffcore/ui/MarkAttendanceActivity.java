@@ -114,7 +114,7 @@ public class MarkAttendanceActivity extends AppCompatActivity {
             tvEmpId.setText("ID: " + emp.getNic()); // Or use auto ID
 
             if (emp.getProfilePhotoPath() != null) {
-                Glide.with(this).load(emp.getProfilePhotoPath()).placeholder(android.R.drawable.sym_def_app_icon).into(imgProfile);
+                Glide.with(this).load(emp.getProfilePhotoPath()).placeholder(R.drawable.ic_default_avatar).into(imgProfile);
             }
         }
     }
